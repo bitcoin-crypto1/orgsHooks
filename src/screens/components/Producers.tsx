@@ -1,43 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { FlatList, Text, StyleSheet, NativeModules } from "react-native";
-import { loadProducers } from "../../services/loadData";
-import Top from "./Top";
+import React, { useMemo } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import Producer from "./Producer";
-
-type Producer = {
-    name: string;
-    image: any;
-    distance: string;
-    stars: number;
-};
+import useProducers, {ProducerItem} from "../../hooks/useProducers";
 interface ProducerProps {
     top: React.ComponentType;
-}
+};
 
-export default function Producers({top: Top}: ProducerProps) {
-    const [title, setTitle] = useState('');
-    const [list, setList] = useState<Producer[]>([]);
-
-    useEffect(() => {
-        const result = loadProducers();
-        setTitle(result.title);
-        setList(result.list);
-    }, []);
-
-    const TopOfList = () => {
-        return <>
+const TopOfList = ({ Top, title}: { Top: React.ComponentType; title: string }) => (
+    <View>
         <Top />
-        <Text style ={styles.title}>{title}</Text>
-        </>
-    }
+        <Text style={styles.title}>{title}</Text>
+    </View>
+);
 
-    return <FlatList
-    data={list}
-    renderItem={({ item }) => <Producer {...item} />}
-    keyExtractor={({name}) => name}
-    ListHeaderComponent={TopOfList} />
-    
-}
+export default function Producers({top: Top}:ProducerProps) {
+    const [title, list] = useProducers();
+    const topOfList = useMemo(() => <TopOfList Top={Top} title={title} />, [Top, title]);
+    return (
+        <FlatList<ProducerItem>
+            data={list}
+            renderItem={({ item }) => <Producer {...item} />}
+            keyExtractor={({ name }) => name}
+            ListHeaderComponent={topOfList}
+            />
+    );
+};
 
 const styles = StyleSheet.create({
     title: {
@@ -46,7 +33,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         marginTop: 16,
         fontWeight: 'bold',
-        color: '#464646'
+        color: '#464646',
     }
-
-})
+});
